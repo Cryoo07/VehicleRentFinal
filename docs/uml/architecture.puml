@@ -1,0 +1,96 @@
+@startuml Architecture
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Vehicle Rental System - Layered Architecture (High Level)
+
+package "Presentation (com.vehiclerent)" {
+    class Main <<UI>>
+    class ConsoleOutput <<utility>>
+}
+
+package "Facade Layer (com.vehiclerent.structural)" {
+    class RentalServiceFacade <<Facade>>
+}
+
+package "Services" {
+    class UserService
+    class ReportServiceProxy <<Proxy>>
+    class ReportServiceImpl
+}
+
+package "Domain" {
+    class Booking
+    class Customer
+    class User
+    class Vehicle
+    class VehicleStateContext
+}
+
+package "Repository Interfaces (com.vehiclerent.repository)" {
+    interface UserRepository
+    interface CustomerRepository
+    interface VehicleRepository
+    interface BookingRepository
+}
+
+package "Persistence - JDBC (PostgreSQL)" {
+    class JdbcUserRepository
+    class JdbcCustomerRepository
+    class JdbcVehicleRepository
+    class JdbcBookingRepository
+    class DatabaseConnection <<Singleton>>
+    class SchemaInitializer
+}
+
+package "Test Repositories (src/test)" {
+    class InMemoryUserRepository
+    class InMemoryCustomerRepository
+    class InMemoryVehicleRepository
+    class InMemoryBookingRepository
+}
+
+class "PostgreSQL / VehicleRentDB" as PG <<database>>
+
+Main --> ConsoleOutput
+Main --> RentalServiceFacade
+Main --> UserService
+Main --> ReportServiceProxy
+Main --> VehicleRepository
+Main --> BookingRepository
+
+RentalServiceFacade --> BookingRepository
+RentalServiceFacade --> VehicleRepository
+
+UserService --> UserRepository
+UserService --> CustomerRepository
+
+ReportServiceProxy ..> ReportServiceImpl : delegates
+ReportServiceProxy --> BookingRepository
+
+ReportServiceImpl --> BookingRepository
+
+UserRepository <|.. JdbcUserRepository
+CustomerRepository <|.. JdbcCustomerRepository
+VehicleRepository <|.. JdbcVehicleRepository
+BookingRepository <|.. JdbcBookingRepository
+
+UserRepository <|.. InMemoryUserRepository
+CustomerRepository <|.. InMemoryCustomerRepository
+VehicleRepository <|.. InMemoryVehicleRepository
+BookingRepository <|.. InMemoryBookingRepository
+
+JdbcUserRepository --> DatabaseConnection
+JdbcCustomerRepository --> DatabaseConnection
+JdbcVehicleRepository --> DatabaseConnection
+JdbcBookingRepository --> DatabaseConnection
+
+SchemaInitializer --> DatabaseConnection
+DatabaseConnection --> PG : JDBC
+
+VehicleStateContext --> Vehicle : tracks status
+
+@enduml

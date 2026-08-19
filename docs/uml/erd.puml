@@ -1,0 +1,60 @@
+@startuml ERD
+!theme plain
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+title Vehicle Rental System - Entity Relationship Diagram (ERD)
+
+entity "users" as users {
+  * id : VARCHAR(50) <<PK>>
+  --
+  * username : VARCHAR(100) <<UNIQUE>>
+  * password : VARCHAR(255)
+  * role : VARCHAR(20)  # ADMIN / CUSTOMER
+}
+
+entity "customers" as customers {
+  * id : VARCHAR(50) <<PK, FK -> users.id>>
+  --
+  * name : VARCHAR(200)
+  * email : VARCHAR(200)
+  * phone : VARCHAR(50)
+}
+
+entity "vehicles" as vehicles {
+  * id : VARCHAR(50) <<PK>>
+  --
+  * type : VARCHAR(20)      # Car / Bike
+  * model : VARCHAR(200)
+  * base_price : DECIMAL(10,2)
+  * has_sunroof : BOOLEAN
+  * has_bluetooth : BOOLEAN
+  * has_helmet : BOOLEAN
+  * has_carrier : BOOLEAN
+  * has_gps : BOOLEAN
+  * has_insurance : BOOLEAN
+  * has_child_seat : BOOLEAN
+  * status : VARCHAR(30)    # Available / Booked / UnderMaintenance
+}
+
+entity "bookings" as bookings {
+  * booking_id : VARCHAR(50) <<PK>>
+  --
+  * customer_id : VARCHAR(50) <<FK -> customers.id>>
+  * vehicle_id : VARCHAR(50) <<FK -> vehicles.id>>
+  * total_amount : DECIMAL(10,2)
+  * days : INTEGER
+  * late_fee : DECIMAL(10,2)
+  * status : VARCHAR(20)    # CONFIRMED / CANCELLED / COMPLETED
+  * created_at : TIMESTAMP
+}
+
+' 1 user : 1 customer (customers.id = users.id, ON DELETE CASCADE)
+users ||--|| customers : "1 : 1 (id)"
+' 1 customer : N bookings
+customers ||--o{ bookings : "1 : N"
+' 1 vehicle : N bookings
+vehicles ||--o{ bookings : "1 : N"
+
+@enduml

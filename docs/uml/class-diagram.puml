@@ -1,0 +1,229 @@
+@startuml VehicleRent_ClassDiagram
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+title Vehicle Renting System - UML Class Diagram\n(Design Patterns Highlighted)
+
+' ===== CREATIONAL =====
+package "config (Singleton)" #LightYellow {
+  class SystemConfig {
+    - instance: SystemConfig
+    - databaseName: String
+    - systemVersion: String
+    + getInstance(): SystemConfig
+    + displayConfiguration(): void
+  }
+}
+
+package "notification (Factory Method)" #LightYellow {
+  interface Notification {
+    + send(recipient, message): void
+  }
+  abstract class NotificationCreator {
+    + notifyCustomer(): void
+    # createNotification(): Notification
+  }
+  class EmailNotification
+  class SmsNotification
+  class PushNotification
+  class EmailNotificationCreator
+  class SmsNotificationCreator
+  class PushNotificationCreator
+
+  Notification <|.. EmailNotification
+  Notification <|.. SmsNotification
+  Notification <|.. PushNotification
+  NotificationCreator <|-- EmailNotificationCreator
+  NotificationCreator <|-- SmsNotificationCreator
+  NotificationCreator <|-- PushNotificationCreator
+  NotificationCreator ..> Notification : creates
+}
+
+package "vehicle (Builder + Decorator)" #LightYellow {
+  interface Vehicle {
+    + getId(): String
+    + getTotalPrice(): double
+    + getDescription(): String
+  }
+  class VehicleBuilder {
+    + build(): Vehicle
+  }
+  class Car
+  class Bike
+  abstract class VehicleDecorator
+  class GpsDecorator
+  class InsuranceDecorator
+  class ChildSeatDecorator
+  class VehicleManager
+
+  Vehicle <|.. Car
+  Vehicle <|.. Bike
+  Vehicle <|.. VehicleDecorator
+  VehicleDecorator <|-- GpsDecorator
+  VehicleDecorator <|-- InsuranceDecorator
+  VehicleDecorator <|-- ChildSeatDecorator
+  VehicleBuilder ..> Vehicle : builds
+  VehicleDecorator o-- Vehicle : wraps
+}
+
+' ===== STRUCTURAL =====
+package "payment (Strategy + Adapter)" #LightBlue {
+  interface PaymentStrategy {
+    + pay(amount): boolean
+  }
+  class CreditCardPayment
+  class PayPalPayment
+  class MobileWalletPayment
+  class PaymentContext
+  interface PaymentGateway
+  class ThirdPartyPaymentApi
+  class PaymentGatewayAdapter
+
+  PaymentStrategy <|.. CreditCardPayment
+  PaymentStrategy <|.. PayPalPayment
+  PaymentStrategy <|.. MobileWalletPayment
+  PaymentContext o-- PaymentStrategy
+  PaymentGateway <|.. PaymentGatewayAdapter
+  PaymentGatewayAdapter --> ThirdPartyPaymentApi : adapts
+}
+
+package "security (Proxy)" #LightBlue {
+  interface ReportService {
+    + generateRentalHistoryReport(): String
+    + generateRevenueReport(): String
+  }
+  class ReportServiceProxy
+  class SecurityContext
+  ReportService <|.. ReportServiceProxy
+}
+
+package "reports" {
+  class ReportServiceImpl
+  ReportService <|.. ReportServiceImpl
+  ReportServiceProxy --> ReportServiceImpl : delegates
+}
+
+' ===== BEHAVIORAL =====
+package "rental (Facade + Command + State)" #LightGreen {
+  class RentalServiceFacade
+  class Booking
+  class BookingRepository
+
+  interface BookingCommand {
+    + execute(): void
+    + undo(): void
+  }
+  class RentCommand
+  class CancelCommand
+  class ReturnCommand
+  class BookingInvoker
+
+  interface VehicleState {
+    + rent(): void
+    + returnVehicle(): void
+  }
+  class VehicleStateContext
+  class AvailableState
+  class BookedState
+  class UnderMaintenanceState
+
+  BookingCommand <|.. RentCommand
+  BookingCommand <|.. CancelCommand
+  BookingCommand <|.. ReturnCommand
+  BookingInvoker o-- BookingCommand
+  VehicleState <|.. AvailableState
+  VehicleState <|.. BookedState
+  VehicleState <|.. UnderMaintenanceState
+  VehicleStateContext o-- VehicleState
+  RentalServiceFacade --> BookingRepository
+  RentalServiceFacade --> BookingInvoker
+  RentalServiceFacade --> PaymentGateway
+}
+
+package "observer (Observer)" #LightGreen {
+  interface VehicleStatusObserver {
+    + update(vehicleId, status): void
+  }
+  class CustomerNotifier
+  class VehicleStatusSubject
+
+  VehicleStatusObserver <|.. CustomerNotifier
+  VehicleStatusSubject o-- VehicleStatusObserver
+}
+
+package "user" {
+  class User {
+    + Role: ADMIN | CUSTOMER
+  }
+  class Customer
+  class UserService
+  UserService --> User
+  UserService --> Customer
+}
+
+' ===== RELATIONSHIPS =====
+RentalServiceFacade ..> NotificationCreator : uses
+RentalServiceFacade ..> VehicleStatusSubject : notifies
+RentalServiceFacade ..> PaymentContext : uses
+ReportServiceProxy ..> SecurityContext : checks
+ReportServiceProxy ..> User : authorizes
+Main ..> SystemConfig
+Main ..> RentalServiceFacade
+
+note right of SystemConfig
+  **Singleton**
+  Single config instance
+end note
+
+note right of NotificationCreator
+  **Factory Method**
+  Creates Email/SMS/Push
+end note
+
+note right of VehicleBuilder
+  **Builder**
+  Step-by-step vehicle build
+end note
+
+note right of VehicleDecorator
+  **Decorator**
+  GPS, Insurance, Child Seat
+end note
+
+note right of PaymentGatewayAdapter
+  **Adapter**
+  Third-party API integration
+end note
+
+note right of RentalServiceFacade
+  **Facade**
+  Simplified rental workflow
+end note
+
+note right of ReportServiceProxy
+  **Proxy**
+  Admin-only report access
+end note
+
+note right of PaymentContext
+  **Strategy**
+  Credit Card, PayPal, Wallet
+end note
+
+note right of VehicleStatusSubject
+  **Observer**
+  Status change notifications
+end note
+
+note right of BookingCommand
+  **Command**
+  Rent, Cancel, Return
+end note
+
+note right of VehicleStateContext
+  **State**
+  Available, Booked, Maintenance
+end note
+
+@enduml

@@ -1,0 +1,147 @@
+@startuml DesignPatterns
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam packageTitleAlignment center
+left to right direction
+
+title Vehicle Rental System - Design Pattern Class Diagram (12 Patterns)
+
+package "CREATIONAL" as creational #FEF3E2 {
+    ' ---- Singleton ----
+    class SystemConfig <<Singleton>>
+    class DatabaseConnection <<Singleton>>
+    SystemConfig *-- "1" SystemConfig : getInstance()
+    DatabaseConnection *-- "1" DatabaseConnection : getInstance()
+
+    ' ---- Builder ----
+    class VehicleBuilder <<Builder>>
+    class Vehicle <<Product>>
+    class Car
+    class Bike
+    VehicleBuilder --> Vehicle : builds
+    VehicleBuilder --> Car : builds
+    VehicleBuilder --> Bike : builds
+    Car ..|> Vehicle
+    Bike ..|> Vehicle
+
+    ' ---- Factory Method ----
+    class NotificationCreator <<FactoryMethod>>
+    class EmailNotificationCreator
+    class SmsNotificationCreator
+    class PushNotificationCreator
+    interface Notification
+    class EmailNotification
+    class SmsNotification
+    class PushNotification
+    NotificationCreator --> Notification : createNotification()
+    NotificationCreator <|-- EmailNotificationCreator
+    NotificationCreator <|-- SmsNotificationCreator
+    NotificationCreator <|-- PushNotificationCreator
+    Notification <|.. EmailNotification
+    Notification <|.. SmsNotification
+    Notification <|.. PushNotification
+}
+
+package "STRUCTURAL" as structural #E8F1FE {
+    ' ---- Decorator ----
+    class VehicleDecorator <<Decorator>>
+    class GpsDecorator
+    class InsuranceDecorator
+    class ChildSeatDecorator
+    VehicleDecorator <|-- GpsDecorator
+    VehicleDecorator <|-- InsuranceDecorator
+    VehicleDecorator <|-- ChildSeatDecorator
+
+    ' ---- Adapter ----
+    interface PaymentGateway
+    class PaymentGatewayAdapter <<Adapter>>
+    class ThirdPartyPaymentApi
+    PaymentGateway <|.. PaymentGatewayAdapter
+    PaymentGatewayAdapter --> ThirdPartyPaymentApi
+
+    ' ---- Facade ----
+    class RentalServiceFacade <<Facade>>
+
+    ' ---- Proxy ----
+    interface ReportService
+    class ReportServiceImpl
+    class ReportServiceProxy <<Proxy>>
+    class SecurityContext
+    ReportService <|.. ReportServiceImpl
+    ReportService <|.. ReportServiceProxy
+    ReportServiceProxy --> ReportServiceImpl
+    ReportServiceProxy --> SecurityContext
+
+    ' ---- Infrastructure (domain helpers) ----
+    class BookingRepository <<interface>>
+    class UserService
+}
+
+package "BEHAVIORAL" as behavioral #EDF7EA {
+    ' ---- Strategy (payments) ----
+    interface PaymentStrategy
+    class PaymentContext
+    class CreditCardPayment
+    class PayPalPayment
+    class MobileWalletPayment
+    PaymentStrategy <|.. CreditCardPayment
+    PaymentStrategy <|.. PayPalPayment
+    PaymentStrategy <|.. MobileWalletPayment
+    PaymentContext --> PaymentStrategy
+
+    ' ---- Strategy (late fines) ----
+    interface LateFeeStrategy
+    class StandardLateFee
+    class FlatLateFee
+    LateFeeStrategy <|.. StandardLateFee
+    LateFeeStrategy <|.. FlatLateFee
+
+    ' ---- Observer ----
+    interface VehicleStatusObserver
+    class VehicleStatusSubject
+    class CustomerNotifier
+    VehicleStatusSubject o-- VehicleStatusObserver
+    VehicleStatusObserver <|.. CustomerNotifier
+
+    ' ---- State ----
+    interface VehicleState
+    class VehicleStateContext
+    class AvailableState
+    class BookedState
+    class UnderMaintenanceState
+    VehicleState <|.. AvailableState
+    VehicleState <|.. BookedState
+    VehicleState <|.. UnderMaintenanceState
+    VehicleStateContext o-- VehicleState
+
+    ' ---- Command ----
+    interface BookingCommand
+    class BookingInvoker
+    class RentCommand
+    class CancelCommand
+    class ReturnCommand
+    class Booking
+    BookingCommand <|.. RentCommand
+    BookingCommand <|.. CancelCommand
+    BookingCommand <|.. ReturnCommand
+    BookingInvoker o-- BookingCommand
+    RentCommand --> Booking
+    RentCommand --> BookingRepository
+}
+
+' ---- Cross-sector collaborations ----
+VehicleDecorator --> Vehicle : wraps
+RentalServiceFacade --> BookingCommand
+RentalServiceFacade --> VehicleStateContext
+RentalServiceFacade --> PaymentContext
+RentalServiceFacade --> VehicleStatusSubject
+RentalServiceFacade --> NotificationCreator
+RentalServiceFacade --> UserService
+
+' ---- Force top-to-bottom sector ordering (prevents horizontal clipping) ----
+creational -[hidden]down-> structural
+structural -[hidden]down-> behavioral
+
+@enduml
